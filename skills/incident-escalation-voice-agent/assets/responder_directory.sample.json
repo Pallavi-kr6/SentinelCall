@@ -1,0 +1,48 @@
+{
+  "_comment": "FICTIONAL demo roster using reserved-block numbers (+1555010xxxx). Replace with your own organization's real on-call staff, real E.164 numbers, and confirm every person listed has already agreed to receive duty calls before going live. See references/safety.md.",
+
+  "warehouse-4": {
+    "zone_warden": {
+      "name": "Warehouse 4 Duty Officer",
+      "phone": "+15550101001",
+      "region": "US",
+      "locale": "en-US"
+    },
+    "district_control_room": {
+      "name": "District Facilities Control Room",
+      "phone": "+15550101002",
+      "region": "US",
+      "locale": "en-US"
+    },
+    "regional_liaison": {
+      "name": "Regional Safety Liaison",
+      "phone": "+15550101003",
+      "region": "US",
+      "locale": "en-US"
+    }
+  },
+
+  "ward-7": {
+    "zone_warden": {
+      "name": "Ward 7 Duty Officer",
+      "phone": "+15550102001",
+      "region": "IN",
+      "locale": "en-IN"
+    },
+    "district_control_room": {
+      "name": "District Disaster Management Control Room",
+      "phone": "+15550102002",
+      "region": "IN",
+      "locale": "en-IN"
+    }
+  },
+
+  "plant-b": {
+    "zone_warden": {
+      "name": "Plant B Shift Supervisor",
+      "phone": "+15550103001",
+      "region": "US",
+      "locale": "en-US"
+    }
+  }
+}

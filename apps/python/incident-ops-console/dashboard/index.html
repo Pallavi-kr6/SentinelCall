@@ -1,0 +1,215 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>SentinelCall — Incident Ops Console</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500;600&family=IBM+Plex+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --bg:            #0B0E14;
+    --panel:         #121724;
+    --panel-2:       #171D2C;
+    --hairline:      #232A3B;
+    --text:          #E4E7EC;
+    --text-muted:    #8892A6;
+    --text-faint:    #59627A;
+    --ok:            #3DDC84;
+    --ok-dim:        #1E4630;
+    --warn:          #F5A623;
+    --warn-dim:      #4A3A16;
+    --crit:          #FF5C5C;
+    --crit-dim:      #4A2020;
+    --idle:          #3A4257;
+    --mono: 'IBM Plex Mono', ui-monospace, monospace;
+    --sans: 'IBM Plex Sans', system-ui, sans-serif;
+  }
+  *{ box-sizing:border-box; }
+  html,body{ margin:0; padding:0; background:var(--bg); color:var(--text); font-family:var(--sans); }
+  body{ min-height:100vh; }
+
+  .topbar{
+    display:flex; align-items:center; justify-content:space-between;
+    padding:18px 28px; border-bottom:1px solid var(--hairline);
+    background:linear-gradient(180deg, var(--panel), var(--bg));
+    position:sticky; top:0; z-index:5;
+  }
+  .brand{ display:flex; align-items:center; gap:12px; }
+  .brand .dot{ width:10px; height:10px; border-radius:50%; background:var(--ok); box-shadow:0 0 10px var(--ok); animation:pulse 2.4s infinite; }
+  @keyframes pulse{ 0%,100%{opacity:1;} 50%{opacity:.35;} }
+  .brand h1{ font-size:16px; font-weight:600; letter-spacing:.02em; margin:0; }
+  .brand small{ display:block; color:var(--text-muted); font-family:var(--mono); font-size:11px; letter-spacing:.04em; margin-top:2px; }
+
+  .stats{ display:flex; gap:22px; font-family:var(--mono); font-size:12px; color:var(--text-muted); }
+  .stats b{ color:var(--text); font-size:15px; display:block; font-weight:600; }
+  .stat{ text-align:right; min-width:64px; }
+  .mode-pill{
+    font-family:var(--mono); font-size:11px; padding:5px 10px; border-radius:4px;
+    border:1px solid var(--hairline); color:var(--text-muted); letter-spacing:.05em;
+  }
+  .mode-pill.live{ color:var(--crit); border-color:var(--crit-dim); }
+  .mode-pill.dry{ color:var(--warn); border-color:var(--warn-dim); }
+
+  main{ max-width:920px; margin:0 auto; padding:26px 20px 80px; }
+
+  .empty{
+    border:1px dashed var(--hairline); border-radius:8px; padding:48px 24px; text-align:center;
+    color:var(--text-muted); font-size:14px; margin-top:40px;
+  }
+  .empty code{ font-family:var(--mono); background:var(--panel-2); padding:2px 6px; border-radius:4px; color:var(--text); }
+
+  .incident{
+    display:flex; gap:0; background:var(--panel); border:1px solid var(--hairline); border-radius:8px;
+    margin-bottom:14px; overflow:hidden; animation:rise .25s ease-out;
+  }
+  @keyframes rise{ from{opacity:0; transform:translateY(-6px);} to{opacity:1; transform:translateY(0);} }
+  .incident .railbar{ width:5px; flex-shrink:0; }
+  .railbar.resolved_confirmed{ background:var(--ok); }
+  .railbar.unresolved_escalated{ background:var(--crit); }
+  .railbar.no_call_low_confidence{ background:var(--idle); }
+
+  .incident-body{ flex:1; padding:16px 18px; }
+  .incident-head{ display:flex; align-items:baseline; justify-content:space-between; gap:12px; flex-wrap:wrap; }
+  .incident-title{ display:flex; align-items:baseline; gap:10px; }
+  .hazard{ font-size:15px; font-weight:600; text-transform:capitalize; }
+  .meta{ font-family:var(--mono); font-size:12px; color:var(--text-muted); }
+  .confidence{ font-family:var(--mono); font-size:12px; color:var(--text-muted); }
+
+  .badge{
+    font-family:var(--mono); font-size:11px; padding:4px 9px; border-radius:4px; letter-spacing:.03em;
+    white-space:nowrap;
+  }
+  .badge.resolved_confirmed{ background:var(--ok-dim); color:var(--ok); }
+  .badge.unresolved_escalated{ background:var(--crit-dim); color:var(--crit); }
+  .badge.no_call_low_confidence{ background:var(--panel-2); color:var(--text-muted); }
+
+  .ladder{ display:flex; gap:6px; margin:14px 0 10px; }
+  .ladder .rung{
+    flex:1; height:8px; border-radius:3px; background:var(--panel-2); border:1px solid var(--hairline);
+    position:relative;
+  }
+  .ladder .rung.ok{ background:var(--ok); border-color:var(--ok); }
+  .ladder .rung.warn{ background:var(--warn); border-color:var(--warn); }
+  .ladder .rung.crit{ background:var(--crit-dim); border-color:var(--crit); }
+  .ladder .rung.skip{ background:transparent; border-style:dashed; }
+
+  .attempts{ margin-top:10px; border-top:1px solid var(--hairline); padding-top:10px; }
+  .attempt-row{
+    display:grid; grid-template-columns: 150px 150px 90px 110px 1fr; gap:10px; align-items:center;
+    font-family:var(--mono); font-size:12px; color:var(--text-muted); padding:4px 0;
+  }
+  .attempt-row .tier{ color:var(--text); text-transform:none; }
+  .attempt-row .status.completed{ color:var(--ok); }
+  .attempt-row .status.no_answer,.attempt-row .status.declined{ color:var(--warn); }
+  .attempt-row .status.skipped_missing_roster_entry{ color:var(--crit); }
+
+  .no-call-note{ font-size:13px; color:var(--text-muted); font-style:italic; padding-top:6px; }
+
+  footer{ text-align:center; color:var(--text-faint); font-family:var(--mono); font-size:11px; padding:20px; }
+</style>
+</head>
+<body>
+
+  <div class="topbar">
+    <div class="brand">
+      <div class="dot"></div>
+      <div>
+        <h1>SentinelCall</h1>
+        <small>INCIDENT OPS CONSOLE</small>
+      </div>
+    </div>
+    <div class="stats">
+      <div class="stat"><b id="stat-total">0</b>incidents</div>
+      <div class="stat"><b id="stat-confirmed">0</b>confirmed</div>
+      <div class="stat"><b id="stat-escalated">0</b>escalated</div>
+      <div class="mode-pill" id="mode-pill">checking mode…</div>
+    </div>
+  </div>
+
+  <main>
+    <div id="feed"></div>
+    <div class="empty" id="empty-state" style="display:none;">
+      No incidents yet. Post a fictional alert to see the escalation ladder fill in:<br/><br/>
+      <code>curl -X POST http://localhost:8000/alerts/ingest -H "Content-Type: application/json" -d '{"alert_id":"demo-1","hazard_type":"fire","zone":"warehouse-4","confidence":0.94,"detected_at":"2026-08-01T02:14:00Z","source":"cctv-cam-12"}'</code>
+    </div>
+  </main>
+
+  <footer>dry-run by default · phone numbers shown are masked · see references/safety.md</footer>
+
+<script>
+const feed = document.getElementById('feed');
+const emptyState = document.getElementById('empty-state');
+
+function rungClass(attempt) {
+  if (attempt.status === 'skipped_missing_roster_entry') return 'crit';
+  if (attempt.structured_result && attempt.structured_result.can_dispatch === 'yes' && !attempt.structured_result.needs_escalation) return 'ok';
+  return 'warn';
+}
+
+function renderIncident(inc) {
+  const el = document.createElement('div');
+  el.className = 'incident';
+
+  const maxTiers = 3;
+  const rungs = [];
+  for (let i = 0; i < maxTiers; i++) {
+    if (inc.attempts[i]) {
+      rungs.push(`<div class="rung ${rungClass(inc.attempts[i])}"></div>`);
+    } else {
+      rungs.push(`<div class="rung skip"></div>`);
+    }
+  }
+
+  const attemptRows = inc.attempts.map(a => `
+    <div class="attempt-row">
+      <div class="tier">${a.tier}</div>
+      <div>${a.responder_name}</div>
+      <div>${a.responder_phone_masked}</div>
+      <div class="status ${a.status}">${a.status}</div>
+      <div>${a.structured_result ? JSON.stringify(a.structured_result) : '—'}</div>
+    </div>
+  `).join('');
+
+  el.innerHTML = `
+    <div class="railbar ${inc.outcome}"></div>
+    <div class="incident-body">
+      <div class="incident-head">
+        <div class="incident-title">
+          <span class="hazard">${inc.hazard_type.replace('_',' ')}</span>
+          <span class="meta">zone ${inc.zone} · ${inc.alert_id}</span>
+        </div>
+        <div style="display:flex; align-items:center; gap:10px;">
+          <span class="confidence">conf ${(inc.confidence*100).toFixed(0)}%</span>
+          <span class="badge ${inc.outcome}">${inc.outcome.replace(/_/g,' ')}</span>
+        </div>
+      </div>
+      <div class="ladder">${rungs.join('')}</div>
+      ${inc.attempts.length ? `<div class="attempts">${attemptRows}</div>` : `<div class="no-call-note">below confidence floor — routed for human review, no call placed</div>`}
+    </div>
+  `;
+  return el;
+}
+
+async function refresh() {
+  try {
+    const res = await fetch('/incidents');
+    const incidents = await res.json();
+
+    feed.innerHTML = '';
+    emptyState.style.display = incidents.length ? 'none' : 'block';
+    incidents.forEach(inc => feed.appendChild(renderIncident(inc)));
+
+    document.getElementById('stat-total').textContent = incidents.length;
+    document.getElementById('stat-confirmed').textContent = incidents.filter(i => i.outcome === 'resolved_confirmed').length;
+    document.getElementById('stat-escalated').textContent = incidents.filter(i => i.outcome === 'unresolved_escalated').length;
+  } catch (e) {
+    // server not reachable yet — quietly retry on next tick
+  }
+}
+
+refresh();
+setInterval(refresh, 3000);
+</script>
+</body>
+</html>

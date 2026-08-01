@@ -1,0 +1,8 @@
+# Core (dry-run demo has no external dependency beyond the standard library)
+
+# Live CALL-E calls (optional — only needed when running with --live)
+# calle-ai
+
+# Ops console demo app
+fastapi>=0.110
+uvicorn>=0.29

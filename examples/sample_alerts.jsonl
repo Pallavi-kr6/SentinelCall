@@ -1,0 +1,5 @@
+{"alert_id": "alert-001", "hazard_type": "fire", "zone": "warehouse-4", "confidence": 0.94, "detected_at": "2026-08-01T02:14:00Z", "source": "cctv-cam-12"}
+{"alert_id": "alert-002", "hazard_type": "flood", "zone": "ward-7", "confidence": 0.81, "detected_at": "2026-08-01T03:40:00Z", "source": "river-gauge-sensor-3"}
+{"alert_id": "alert-003", "hazard_type": "smoke", "zone": "plant-b", "confidence": 0.68, "detected_at": "2026-08-01T05:02:00Z", "source": "cctv-cam-07"}
+{"alert_id": "alert-004", "hazard_type": "intrusion", "zone": "warehouse-4", "confidence": 0.55, "detected_at": "2026-08-01T06:11:00Z", "source": "perimeter-cam-2"}
+{"alert_id": "alert-005", "hazard_type": "gas_leak", "zone": "plant-b", "confidence": 0.91, "detected_at": "2026-08-01T07:25:00Z", "source": "gas-sensor-array-1"}
