@@ -60,18 +60,40 @@ def list_incidents():
 
 @app.post("/alerts/ingest")
 async def ingest_alert(request: Request):
-    alert = await request.json()
-    v = validate_alert(alert)
-    if not v["ok"]:
-        return JSONResponse({"ok": False, "errors": v["errors"]}, status_code=422)
+    body = await request.body()
+    text = body.decode("utf-8").strip()
 
-    roster = _load_roster()
-    record = run_escalation(alert, roster, _client)
-    incident = record.to_json()
-    incident["received_at"] = time.time()
-    _INCIDENTS.insert(0, incident)  # newest first
-    return JSONResponse({"ok": True, "incident": incident})
+    incidents = []
 
+    for line in text.splitlines():
+        if not line.strip():
+            continue
+
+        alert = json.loads(line)
+
+        v = validate_alert(alert)
+        if not v["ok"]:
+            return JSONResponse(
+                {"ok": False, "errors": v["errors"]},
+                status_code=422,
+            )
+
+        roster = _load_roster()
+        record = run_escalation(alert, roster, _client)
+
+        incident = record.to_json()
+        incident["received_at"] = time.time()
+        _INCIDENTS.insert(0, incident)
+        incidents.append(incident)
+
+    return JSONResponse(
+        {
+            "ok": True,
+            "processed": len(incidents),
+            "incidents": incidents,
+        }
+    )
+ 
 
 @app.post("/calle/webhook")
 async def calle_webhook(request: Request):
